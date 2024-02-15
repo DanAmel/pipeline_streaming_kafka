@@ -1,0 +1,57 @@
+version: '3'
+
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    ports:
+      - 2181:2181
+
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    ports:
+      - 9092:9092
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    links:
+      - zookeeper
+
+  fastdata:
+    image: lensesio/fast-data-dev
+    container_name: fastdata
+    ports:
+      - 3030:3030
+      - 8080:8080
+      - 8081:8081
+    environment:
+      - SAMPLEDATA=0
+      - REST_PORT=0
+      - FORWARDLOGS=0
+      - RUNTESTS=0
+      - DISABLE_JMX=1
+      - CONNECTORS=1
+      - WEB_PORT=0
+      - DISABLE=hive-1.1
+  
+  hbase:
+    image: harisekhon/hbase
+    container_name: hbase
+    depends_on: 
+      - fastdata
+      - zookeeper   
+    ports:
+      - 16010:16010
+      - 16020:16020
+      - 16030:16030
+      - 16040:16040
+      - 16060:16060
+      - 16070:16070
+    environment:
+      - HBASE_MANAGES_ZK=true
+    links:
+      - zookeeper      
+

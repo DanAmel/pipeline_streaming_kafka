@@ -1,1 +1,2 @@
-logs/project_consumer_d04/consume_task/2024-02-23T042304.159920+0000/1.log
+logs
+dags/__pycache__

@@ -1,7 +1,22 @@
+from airflow.models import DAG
+from airflow.utils.dates import days_ago
+from airflow.operators.python_operator import PythonOperator
+from airflow.operators.bash import BashOperator
 from kafka import KafkaProducer, KafkaConsumer
 from kafka.errors import KafkaError
 import json
 from base64 import b64encode
+import requests 
+import json
+
+
+args = {
+ 
+    'owner': 'esperancia_daniel',
+    'start_date': days_ago(1)
+}
+
+dag = DAG(dag_id = 'project_consumer_d04', default_args=args, schedule_interval=None)
 
 
 
@@ -9,27 +24,14 @@ from base64 import b64encode
 def encode_to_base64(value):
     return b64encode(value.encode()).decode()
 
-import requests 
-import json
 
-baseUrl = "http://localhost:16201/"
+
+baseUrl = "http://host.docker.internal:16201/"
 table = "stream_db"
 
-def getVersion():
-    response = requests.get(baseUrl+"version")
-    responseJson = response.text
-    #print(responseJson)
-    return responseJson
-
-
-getVersion()
 
 def consumeData():
-    consumer = KafkaConsumer("data", group_id="daniel", bootstrap_servers=['localhost:9092'])
-
-    
-
-
+    consumer = KafkaConsumer("data", group_id="esperancia_daniel", bootstrap_servers=['kafka1:9093'])
 
     for message in consumer:
         # message value and key are raw bytes -- decode if necessary!
@@ -80,5 +82,12 @@ def consumeData():
         #return responseJson
 
 
-while True:
-    consumeData()
+with dag:
+
+    consume_task = PythonOperator(
+        task_id='consume_task',
+        python_callable = consumeData
+    )
+
+
+    consume_task
